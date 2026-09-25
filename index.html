@@ -3,69 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>PS4 Control Center</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="app">
+<div id="app">
 
     <header class="topbar">
+
         <div class="brand">
-            <div class="brand-mark">PS</div>
+            <div class="brand-logo">PS4</div>
+
             <div>
-                <div class="brand-title">PS4 CONTROL CENTER</div>
-                <div class="brand-subtitle">REMOTE MANAGEMENT</div>
+                <div class="brand-title">
+                    CONTROL CENTER
+                </div>
+
+                <div class="brand-subtitle">
+                    REMOTE CONSOLE MANAGEMENT
+                </div>
             </div>
         </div>
 
-        <div class="connection">
-            <span id="connectionDot"></span>
-            <span id="connectionText">OFFLINE</span>
-            <span class="ip" id="ps4Ip">192.168.1.35</span>
+        <div class="top-status">
+
+            <div id="onlineDot" class="status-dot offline"></div>
+
+            <div>
+                <div id="onlineText">OFFLINE</div>
+                <div id="topIp">192.168.1.35</div>
+            </div>
+
         </div>
+
     </header>
+
 
     <main>
 
-        <section class="hero">
+        <!-- DASHBOARD -->
 
-            <div class="hero-left">
-                <div class="small-label">CONSOLE</div>
+        <section id="page-dashboard" class="page active">
 
-                <h1 id="consoleName">PLAYSTATION 4</h1>
+            <div class="page-header">
 
-                <div class="status-line">
-                    <span class="status-dot"></span>
-                    <span id="consoleStatus">Waiting for connection</span>
+                <div>
+                    <div class="eyebrow">
+                        CONSOLE
+                    </div>
+
+                    <h1>Dashboard</h1>
+
+                    <p>
+                        PS4 remote management center
+                    </p>
                 </div>
 
-                <button class="primary-button" id="scanButton">
-                    SCAN CONSOLE
+                <button
+                    id="scanButton"
+                    class="button primary">
+                    SCAN PS4
                 </button>
+
             </div>
 
-            <div class="console-card">
 
-                <div class="console-row">
-                    <span>IP ADDRESS</span>
-                    <strong id="infoIp">192.168.1.35</strong>
+            <div class="dashboard-grid">
+
+                <div class="big-console-card">
+
+                    <div class="console-label">
+                        PLAYSTATION 4
+                    </div>
+
+                    <div id="consoleState"
+                         class="console-state">
+                        Waiting for scan
+                    </div>
+
+                    <div class="console-ip">
+                        <span>IP</span>
+                        <strong id="consoleIp">
+                            192.168.1.35
+                        </strong>
+                    </div>
+
                 </div>
 
-                <div class="console-row">
-                    <span>FIRMWARE</span>
-                    <strong id="firmware">UNKNOWN</strong>
+
+                <div class="info-card">
+
+                    <div class="card-header">
+                        SYSTEM
+                    </div>
+
+                    <div class="info-row">
+                        <span>Firmware</span>
+                        <strong id="firmware">
+                            UNKNOWN
+                        </strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>GoldHEN</span>
+                        <strong id="goldhen">
+                            UNKNOWN
+                        </strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Network</span>
+                        <strong id="network">
+                            UNKNOWN
+                        </strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Latency</span>
+                        <strong id="latency">
+                            -
+                        </strong>
+                    </div>
+
                 </div>
 
-                <div class="console-row">
-                    <span>GOLDHEN</span>
-                    <strong id="goldhen">UNKNOWN</strong>
+            </div>
+
+
+            <div class="section-title">
+                SERVICES
+            </div>
+
+
+            <div class="service-grid">
+
+                <div class="service-card">
+
+                    <div class="service-top">
+                        <span class="service-name">
+                            FTP
+                        </span>
+
+                        <span id="ftpStatus"
+                              class="badge unknown">
+                            UNKNOWN
+                        </span>
+                    </div>
+
+                    <div class="service-port">
+                        PORT 2121
+                    </div>
+
+                    <div id="ftpLatency"
+                         class="service-detail">
+                        -
+                    </div>
+
                 </div>
 
-                <div class="console-row">
-                    <span>NETWORK</span>
-                    <strong id="network">UNKNOWN</strong>
+
+                <div class="service-card">
+
+                    <div class="service-top">
+                        <span class="service-name">
+                            KLOG
+                        </span>
+
+                        <span id="klogStatus"
+                              class="badge unknown">
+                            UNKNOWN
+                        </span>
+                    </div>
+
+                    <div class="service-port">
+                        PORT 3232
+                    </div>
+
+                    <div id="klogLatency"
+                         class="service-detail">
+                        -
+                    </div>
+
+                </div>
+
+
+                <div class="service-card">
+
+                    <div class="service-top">
+                        <span class="service-name">
+                            BINLOADER
+                        </span>
+
+                        <span id="binStatus"
+                              class="badge unknown">
+                            UNKNOWN
+                        </span>
+                    </div>
+
+                    <div class="service-port">
+                        PORT 9090
+                    </div>
+
+                    <div id="binLatency"
+                         class="service-detail">
+                        -
+                    </div>
+
                 </div>
 
             </div>
@@ -73,60 +220,186 @@
         </section>
 
 
-        <section class="navigation">
+        <!-- NETWORK -->
 
-            <div class="section-title">
-                CONTROL CENTER
+        <section id="page-network" class="page">
+
+            <div class="page-header">
+
+                <div>
+                    <div class="eyebrow">
+                        NETWORK
+                    </div>
+
+                    <h1>Network Scanner</h1>
+
+                    <p>
+                        Services detected on the configured PS4
+                    </p>
+                </div>
+
+                <button
+                    id="networkScanButton"
+                    class="button primary">
+                    START SCAN
+                </button>
+
             </div>
 
-            <div class="cards">
 
-                <button class="menu-card selected" data-page="dashboard">
-                    <span class="card-number">01</span>
-                    <span class="card-title">DASHBOARD</span>
-                    <span class="card-description">
-                        Console overview and status
-                    </span>
+            <div class="network-card">
+
+                <div class="network-header">
+                    <span>PORT</span>
+                    <span>SERVICE</span>
+                    <span>STATUS</span>
+                    <span>LATENCY</span>
+                </div>
+
+                <div id="portTable">
+
+                    <div class="empty-row">
+                        Press START SCAN
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- PAYLOADS -->
+
+        <section id="page-payloads" class="page">
+
+            <div class="page-header">
+
+                <div>
+                    <div class="eyebrow">
+                        BINLOADER
+                    </div>
+
+                    <h1>Payloads</h1>
+
+                    <p>
+                        Send compatible BIN payloads to the PS4
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="warning">
+                Only send payloads compatible with your exact
+                firmware and jailbreak environment.
+            </div>
+
+
+            <div class="payload-panel">
+
+                <div class="upload-area">
+
+                    <input
+                        type="file"
+                        id="payloadFile"
+                        accept=".bin">
+
+                    <label for="payloadFile">
+                        SELECT BIN PAYLOAD
+                    </label>
+
+                    <div id="payloadName">
+                        No payload selected
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="sendPayloadButton"
+                    class="button primary">
+                    SEND PAYLOAD
                 </button>
 
-                <button class="menu-card" data-page="network">
-                    <span class="card-number">02</span>
-                    <span class="card-title">NETWORK</span>
-                    <span class="card-description">
-                        Ports and services
-                    </span>
+            </div>
+
+
+            <div class="section-title">
+                RESULT
+            </div>
+
+            <div id="payloadResult"
+                 class="result-box">
+                Waiting for payload
+            </div>
+
+        </section>
+
+
+        <!-- FTP -->
+
+        <section id="page-ftp" class="page">
+
+            <div class="page-header">
+
+                <div>
+                    <div class="eyebrow">
+                        FILE SYSTEM
+                    </div>
+
+                    <h1>FTP Explorer</h1>
+
+                    <p>
+                        Browse files available through FTP
+                    </p>
+                </div>
+
+                <button
+                    id="ftpRefreshButton"
+                    class="button primary">
+                    REFRESH
                 </button>
 
-                <button class="menu-card" data-page="payloads">
-                    <span class="card-number">03</span>
-                    <span class="card-title">PAYLOADS</span>
-                    <span class="card-description">
-                        Send BIN payloads
-                    </span>
+            </div>
+
+
+            <div class="ftp-path">
+
+                <input
+                    id="ftpPath"
+                    value="/"
+                    spellcheck="false">
+
+                <button
+                    id="ftpOpenButton"
+                    class="button">
+                    OPEN
                 </button>
 
-                <button class="menu-card" data-page="ftp">
-                    <span class="card-number">04</span>
-                    <span class="card-title">FTP</span>
-                    <span class="card-description">
-                        Browse console files
-                    </span>
-                </button>
+            </div>
 
-                <button class="menu-card" data-page="pkg">
-                    <span class="card-number">05</span>
-                    <span class="card-title">PKG</span>
-                    <span class="card-description">
-                        Package management
-                    </span>
-                </button>
 
-                <button class="menu-card" data-page="settings">
-                    <span class="card-number">06</span>
-                    <span class="card-title">SETTINGS</span>
-                    <span class="card-description">
-                        Manager configuration
-                    </span>
+            <div id="ftpFiles"
+                 class="file-list">
+
+                <div class="empty-row">
+                    Open a directory
+                </div>
+
+            </div>
+
+
+            <div class="upload-panel">
+
+                <input
+                    type="file"
+                    id="ftpUploadFile">
+
+                <button
+                    id="ftpUploadButton"
+                    class="button primary">
+                    UPLOAD
                 </button>
 
             </div>
@@ -134,66 +407,187 @@
         </section>
 
 
-        <section class="controller">
+        <!-- PKG -->
 
-            <div class="section-title">
-                CONTROLLER
-            </div>
+        <section id="page-pkg" class="page">
 
-            <div class="controller-panel">
+            <div class="page-header">
 
-                <div class="controller-info">
-                    <div class="controller-name" id="controllerName">
-                        NO CONTROLLER
+                <div>
+                    <div class="eyebrow">
+                        PACKAGES
                     </div>
 
-                    <div class="controller-status" id="controllerStatus">
-                        Connect a DualShock 4 and press any button
-                    </div>
+                    <h1>PKG Manager</h1>
+
+                    <p>
+                        Upload PKG files to the PS4
+                    </p>
                 </div>
 
-                <div class="controller-visual">
+            </div>
 
-                    <div class="stick left-stick">
-                        <div class="stick-inner" id="leftStick"></div>
+
+            <div class="warning">
+                PKG files are uploaded to /data/pkg.
+                The actual installation trigger depends
+                on the services available on your PS4.
+            </div>
+
+
+            <div class="pkg-panel">
+
+                <input
+                    type="file"
+                    id="pkgFile"
+                    accept=".pkg">
+
+                <button
+                    id="pkgUploadButton"
+                    class="button primary">
+                    UPLOAD PKG
+                </button>
+
+            </div>
+
+
+            <div id="pkgResult"
+                 class="result-box">
+                No PKG uploaded
+            </div>
+
+        </section>
+
+
+        <!-- CONTROLLER -->
+
+        <section id="page-controller" class="page">
+
+            <div class="page-header">
+
+                <div>
+                    <div class="eyebrow">
+                        INPUT
                     </div>
+
+                    <h1>Controller</h1>
+
+                    <p>
+                        DualShock 4 / Gamepad monitor
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="controller-card">
+
+                <div id="controllerName"
+                     class="controller-name">
+                    NO CONTROLLER
+                </div>
+
+                <div id="controllerState"
+                     class="controller-state">
+                    Press any button on your controller
+                </div>
+
+
+                <div class="sticks">
+
+                    <div class="stick">
+
+                        <div class="stick-ring">
+                            <div id="leftStick"
+                                 class="stick-dot"></div>
+                        </div>
+
+                        <div class="stick-title">
+                            LEFT STICK
+                        </div>
+
+                        <div id="leftAxis"
+                             class="axis-value">
+                            X 0.00 / Y 0.00
+                        </div>
+
+                    </div>
+
 
                     <div class="controller-center">
-                        <div class="controller-symbol">PS</div>
-                        <div class="controller-hint">
-                            X SELECT
-                        </div>
-                        <div class="controller-hint">
-                            O BACK
-                        </div>
+                        PS4
                     </div>
 
-                    <div class="stick right-stick">
-                        <div class="stick-inner" id="rightStick"></div>
+
+                    <div class="stick">
+
+                        <div class="stick-ring">
+                            <div id="rightStick"
+                                 class="stick-dot"></div>
+                        </div>
+
+                        <div class="stick-title">
+                            RIGHT STICK
+                        </div>
+
+                        <div id="rightAxis"
+                             class="axis-value">
+                            X 0.00 / Y 0.00
+                        </div>
+
                     </div>
 
                 </div>
 
-                <div class="button-status">
+
+                <div class="button-grid">
 
                     <div>
-                        <span class="button-label">X</span>
-                        <span id="btnX">READY</span>
+                        X
+                        <span id="buttonX">READY</span>
                     </div>
 
                     <div>
-                        <span class="button-label">O</span>
-                        <span id="btnO">READY</span>
+                        O
+                        <span id="buttonO">READY</span>
                     </div>
 
                     <div>
-                        <span class="button-label">OPTIONS</span>
-                        <span id="btnOptions">READY</span>
+                        TRIANGLE
+                        <span id="buttonTriangle">
+                            READY
+                        </span>
                     </div>
 
                     <div>
-                        <span class="button-label">L1/R1</span>
-                        <span id="btnShoulders">READY</span>
+                        SQUARE
+                        <span id="buttonSquare">
+                            READY
+                        </span>
+                    </div>
+
+                    <div>
+                        L1
+                        <span id="buttonL1">READY</span>
+                    </div>
+
+                    <div>
+                        R1
+                        <span id="buttonR1">READY</span>
+                    </div>
+
+                    <div>
+                        OPTIONS
+                        <span id="buttonOptions">
+                            READY
+                        </span>
+                    </div>
+
+                    <div>
+                        SHARE
+                        <span id="buttonShare">
+                            READY
+                        </span>
                     </div>
 
                 </div>
@@ -203,26 +597,68 @@
         </section>
 
 
-        <section class="logs">
+        <!-- SETTINGS -->
+
+        <section id="page-settings" class="page">
+
+            <div class="page-header">
+
+                <div>
+                    <div class="eyebrow">
+                        CONFIGURATION
+                    </div>
+
+                    <h1>Settings</h1>
+
+                    <p>
+                        Configure the local PS4 bridge
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="settings-card">
+
+                <label>
+                    PS4 IP ADDRESS
+                </label>
+
+                <input
+                    id="settingsIp"
+                    value="192.168.1.35">
+
+                <label>
+                    BRIDGE ADDRESS
+                </label>
+
+                <input
+                    id="settingsBridge"
+                    value="http://127.0.0.1:5000">
+
+                <button
+                    id="saveSettings"
+                    class="button primary">
+                    SAVE SETTINGS
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- LOG -->
+
+        <section class="system-log">
 
             <div class="section-title">
                 SYSTEM LOG
             </div>
 
-            <div class="log-window" id="logWindow">
-                <div class="log-entry">
+            <div id="log">
+                <div>
                     <span>[SYSTEM]</span>
-                    PS4 Control Center initialized
-                </div>
-
-                <div class="log-entry">
-                    <span>[NETWORK]</span>
-                    Waiting for console scan
-                </div>
-
-                <div class="log-entry">
-                    <span>[CONTROLLER]</span>
-                    Waiting for gamepad
+                    Control Center initialized
                 </div>
             </div>
 
@@ -230,9 +666,56 @@
 
     </main>
 
+
+    <nav class="sidebar">
+
+        <button data-page="dashboard"
+                class="nav-button active">
+            <b>01</b>
+            DASHBOARD
+        </button>
+
+        <button data-page="network"
+                class="nav-button">
+            <b>02</b>
+            NETWORK
+        </button>
+
+        <button data-page="payloads"
+                class="nav-button">
+            <b>03</b>
+            PAYLOADS
+        </button>
+
+        <button data-page="ftp"
+                class="nav-button">
+            <b>04</b>
+            FTP
+        </button>
+
+        <button data-page="pkg"
+                class="nav-button">
+            <b>05</b>
+            PKG
+        </button>
+
+        <button data-page="controller"
+                class="nav-button">
+            <b>06</b>
+            CONTROLLER
+        </button>
+
+        <button data-page="settings"
+                class="nav-button">
+            <b>07</b>
+            SETTINGS
+        </button>
+
+    </nav>
+
+
     <footer>
-        <span>PS4 CONTROL CENTER</span>
-        <span>WEB INTERFACE V1.0</span>
+        PS4 CONTROL CENTER V2.0
     </footer>
 
 </div>

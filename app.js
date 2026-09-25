@@ -1,296 +1,195 @@
+const DEFAULT_BRIDGE = "http://127.0.0.1:5000";
+
+let bridge =
+    localStorage.getItem("ps4_bridge")
+    || DEFAULT_BRIDGE;
+
+let ps4Ip =
+    localStorage.getItem("ps4_ip")
+    || "192.168.1.35";
+
 let currentGamepad = null;
-let selectedIndex = 0;
-let lastButtons = [];
+let selectedNav = 0;
+let lastNavigation = 0;
 
-const menuCards = Array.from(
-    document.querySelectorAll(".menu-card")
-);
+const navButtons =
+    [...document.querySelectorAll(".nav-button")];
 
-const logWindow = document.getElementById("logWindow");
+const pages =
+    [...document.querySelectorAll(".page")];
 
 function log(type, message) {
-    const entry = document.createElement("div");
 
-    entry.className = "log-entry";
+    const container =
+        document.getElementById("log");
 
-    entry.innerHTML =
-        `<span>[${type}]</span> ${message}`;
+    const line =
+        document.createElement("div");
 
-    logWindow.appendChild(entry);
+    line.innerHTML =
+        `<span>[${type}]</span> ${escapeHtml(message)}`;
 
-    logWindow.scrollTop = logWindow.scrollHeight;
+    container.appendChild(line);
+
+    container.scrollTop =
+        container.scrollHeight;
 }
 
-function selectCard(index) {
 
-    if (index < 0) {
-        index = menuCards.length - 1;
-    }
+function escapeHtml(value) {
 
-    if (index >= menuCards.length) {
-        index = 0;
-    }
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
 
-    selectedIndex = index;
 
-    menuCards.forEach((card, i) => {
-        card.classList.toggle(
-            "selected",
-            i === selectedIndex
+function showPage(name) {
+
+    pages.forEach(page => {
+
+        page.classList.toggle(
+            "active",
+            page.id === `page-${name}`
         );
+
     });
 
-    menuCards[selectedIndex].focus();
-}
+    navButtons.forEach(button => {
 
-function activateCard() {
+        button.classList.toggle(
+            "active",
+            button.dataset.page === name
+        );
 
-    const card = menuCards[selectedIndex];
+    });
 
-    if (!card) {
-        return;
+    const index =
+        navButtons.findIndex(
+            button => button.dataset.page === name
+        );
+
+    if (index >= 0) {
+        selectedNav = index;
     }
 
-    const page = card.dataset.page;
-
     log(
-        "NAVIGATION",
-        `Opening ${page.toUpperCase()}`
+        "UI",
+        `Opened ${name}`
     );
 
-    alert(
-        `${page.toUpperCase()} module\n\nModule en préparation dans la V1.1.`
-    );
 }
 
-menuCards.forEach((card, index) => {
 
-    card.addEventListener("click", () => {
-        selectedIndex = index;
-        selectCard(index);
-        activateCard();
+navButtons.forEach((button, index) => {
+
+    button.addEventListener("click", () => {
+
+        selectedNav = index;
+
+        showPage(
+            button.dataset.page
+        );
+
     });
 
 });
 
 
-function detectController() {
+function setOnline(online) {
 
-    const pads = navigator.getGamepads
-        ? navigator.getGamepads()
-        : [];
+    const dot =
+        document.getElementById("onlineDot");
 
-    let found = null;
+    const text =
+        document.getElementById("onlineText");
 
-    for (const pad of pads) {
+    dot.classList.toggle(
+        "online",
+        online
+    );
 
-        if (pad && pad.connected) {
-            found = pad;
-            break;
-        }
+    dot.classList.toggle(
+        "offline",
+        !online
+    );
 
-    }
-
-    if (found && !currentGamepad) {
-
-        currentGamepad = found;
-
-        document.getElementById(
-            "controllerName"
-        ).textContent =
-            found.id.substring(0, 50);
-
-        document.getElementById(
-            "controllerStatus"
-        ).textContent =
-            "Controller connected";
-
-        log(
-            "CONTROLLER",
-            "Gamepad connected"
-        );
-
-        lastButtons = [];
-
-    }
-
-    if (!found && currentGamepad) {
-
-        currentGamepad = null;
-
-        document.getElementById(
-            "controllerName"
-        ).textContent =
-            "NO CONTROLLER";
-
-        document.getElementById(
-            "controllerStatus"
-        ).textContent =
-            "Connect a DualShock 4 and press any button";
-
-        log(
-            "CONTROLLER",
-            "Gamepad disconnected"
-        );
-
-    }
-
+    text.textContent =
+        online
+            ? "ONLINE"
+            : "OFFLINE";
 }
 
-window.addEventListener(
-    "gamepadconnected",
-    detectController
-);
 
-window.addEventListener(
-    "gamepaddisconnected",
-    detectController
-);
-
-
-function updateStick(elementId, x, y) {
+function setBadge(id, open) {
 
     const element =
-        document.getElementById(elementId);
+        document.getElementById(id);
 
     if (!element) {
         return;
     }
 
-    const max = 30;
-
-    const px = Math.max(
-        -max,
-        Math.min(max, x * max)
+    element.classList.remove(
+        "online",
+        "offline",
+        "unknown"
     );
 
-    const py = Math.max(
-        -max,
-        Math.min(max, y * max)
-    );
+    if (open) {
 
-    element.style.transform =
-        `translate(${px}px, ${py}px)`;
+        element.classList.add("online");
+        element.textContent = "ONLINE";
+
+    } else {
+
+        element.classList.add("offline");
+        element.textContent = "OFFLINE";
+
+    }
 }
 
 
-function updateController() {
+async function api(path, options = {}) {
 
-    detectController();
+    const url =
+        bridge.replace(/\/$/, "") + path;
 
-    if (!currentGamepad) {
-        requestAnimationFrame(updateController);
-        return;
+    const response =
+        await fetch(url, {
+            ...options,
+            headers: {
+                ...(options.headers || {})
+            }
+        });
+
+    const text =
+        await response.text();
+
+    let data;
+
+    try {
+        data = JSON.parse(text);
+    } catch {
+        data = {
+            raw: text
+        };
     }
 
-    const pad = currentGamepad;
+    if (!response.ok) {
 
-    const axes = pad.axes || [];
+        throw new Error(
+            data.error ||
+            data.message ||
+            `HTTP ${response.status}`
+        );
 
-    const leftX = axes[0] || 0;
-    const leftY = axes[1] || 0;
-
-    const rightX = axes[2] || 0;
-    const rightY = axes[3] || 0;
-
-    updateStick(
-        "leftStick",
-        leftX,
-        leftY
-    );
-
-    updateStick(
-        "rightStick",
-        rightX,
-        rightY
-    );
-
-    const buttons = pad.buttons || [];
-
-    const pressed = index => {
-        return buttons[index] &&
-               buttons[index].pressed;
-    };
-
-    document.getElementById("btnX").textContent =
-        pressed(0) ? "PRESSED" : "READY";
-
-    document.getElementById("btnO").textContent =
-        pressed(1) ? "PRESSED" : "READY";
-
-    document.getElementById("btnOptions").textContent =
-        pressed(9) ? "PRESSED" : "READY";
-
-    document.getElementById("btnShoulders").textContent =
-        (pressed(4) || pressed(5))
-            ? "PRESSED"
-            : "READY";
-
-
-    handleNavigation(pad);
-
-    requestAnimationFrame(updateController);
-}
-
-
-function handleNavigation(pad) {
-
-    const now = Date.now();
-
-    if (!handleNavigation.lastTime) {
-        handleNavigation.lastTime = 0;
     }
 
-    if (now - handleNavigation.lastTime < 180) {
-        return;
-    }
-
-    const x = pad.axes[0] || 0;
-    const y = pad.axes[1] || 0;
-
-    if (y < -0.6) {
-
-        selectCard(selectedIndex - 3);
-
-        handleNavigation.lastTime = now;
-
-        return;
-    }
-
-    if (y > 0.6) {
-
-        selectCard(selectedIndex + 3);
-
-        handleNavigation.lastTime = now;
-
-        return;
-    }
-
-    if (x < -0.6) {
-
-        selectCard(selectedIndex - 1);
-
-        handleNavigation.lastTime = now;
-
-        return;
-    }
-
-    if (x > 0.6) {
-
-        selectCard(selectedIndex + 1);
-
-        handleNavigation.lastTime = now;
-
-        return;
-    }
-
-    if (pad.buttons[0]?.pressed) {
-
-        activateCard();
-
-        handleNavigation.lastTime = now;
-    }
-
+    return data;
 }
 
 
@@ -304,118 +203,265 @@ async function scanConsole() {
 
     log(
         "NETWORK",
-        "Starting console scan"
+        `Scanning ${ps4Ip}`
     );
-
-    /*
-     * Pour GitHub Pages, le navigateur ne peut pas
-     * effectuer librement des connexions TCP vers
-     * 2121/3232/9090.
-     *
-     * Cette fonction est donc prête à communiquer
-     * avec le serveur Python local que nous ajouterons.
-     */
 
     try {
 
-        const response = await fetch(
-            "http://127.0.0.1:5000/api/status",
-            {
-                method: "GET"
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(
-                `HTTP ${response.status}`
+        const data =
+            await api(
+                `/api/status?ip=${encodeURIComponent(ps4Ip)}`
             );
-        }
 
-        const data = await response.json();
-
-        updateConsole(data);
+        updateDashboard(data);
 
         log(
             "NETWORK",
-            "Console scan completed"
+            data.status || "Scan completed"
+        );
+
+    } catch (error) {
+
+        setOnline(false);
+
+        document.getElementById(
+            "consoleState"
+        ).textContent =
+            "Bridge unavailable";
+
+        log(
+            "ERROR",
+            error.message
+        );
+
+    }
+
+    button.disabled = false;
+    button.textContent = "SCAN PS4";
+}
+
+
+function updateDashboard(data) {
+
+    if (data.ip) {
+
+        ps4Ip = data.ip;
+
+        document.getElementById(
+            "consoleIp"
+        ).textContent = data.ip;
+
+        document.getElementById(
+            "topIp"
+        ).textContent = data.ip;
+
+    }
+
+    setOnline(
+        Boolean(data.ok)
+    );
+
+    document.getElementById(
+        "consoleState"
+    ).textContent =
+        data.status ||
+        (data.ok
+            ? "Console connected"
+            : "Console unavailable");
+
+
+    const services =
+        data.services || {};
+
+
+    if (services.ftp) {
+
+        setBadge(
+            "ftpStatus",
+            services.ftp.open
+        );
+
+        document.getElementById(
+            "ftpLatency"
+        ).textContent =
+            services.ftp.open
+                ? `${services.ftp.latency_ms} ms`
+                : services.ftp.error || "Unavailable";
+
+    }
+
+
+    if (services.klog) {
+
+        setBadge(
+            "klogStatus",
+            services.klog.open
+        );
+
+        document.getElementById(
+            "klogLatency"
+        ).textContent =
+            services.klog.open
+                ? `${services.klog.latency_ms} ms`
+                : services.klog.error || "Unavailable";
+
+    }
+
+
+    if (services.binloader) {
+
+        setBadge(
+            "binStatus",
+            services.binloader.open
+        );
+
+        document.getElementById(
+            "binLatency"
+        ).textContent =
+            services.binloader.open
+                ? `${services.binloader.latency_ms} ms`
+                : services.binloader.error || "Unavailable";
+
+    }
+
+
+    if (services.ftp?.latency_ms) {
+
+        document.getElementById(
+            "latency"
+        ).textContent =
+            `${services.ftp.latency_ms} ms`;
+
+    }
+
+
+    document.getElementById(
+        "network"
+    ).textContent =
+        data.ok
+            ? "CONNECTED"
+            : "OFFLINE";
+
+
+    /*
+     * Le firmware n'est pas inventé.
+     * Si le bridge ne le connaît pas,
+     * on affiche UNKNOWN.
+     */
+
+    document.getElementById(
+        "firmware"
+    ).textContent =
+        data.firmware || "UNKNOWN";
+
+    document.getElementById(
+        "goldhen"
+    ).textContent =
+        data.goldhen || "UNKNOWN";
+}
+
+
+async function scanNetwork() {
+
+    const button =
+        document.getElementById(
+            "networkScanButton"
+        );
+
+    button.disabled = true;
+    button.textContent = "SCANNING...";
+
+    log(
+        "NETWORK",
+        "Starting service scan"
+    );
+
+    try {
+
+        const data =
+            await api(
+                `/api/scan?ip=${encodeURIComponent(ps4Ip)}`
+            );
+
+        renderPorts(
+            data.ports || []
+        );
+
+        log(
+            "NETWORK",
+            `${data.open_count || 0} open service(s)`
         );
 
     } catch (error) {
 
         log(
-            "NETWORK",
-            "Local PS4 bridge unavailable"
+            "ERROR",
+            error.message
         );
-
-        document.getElementById(
-            "consoleStatus"
-        ).textContent =
-            "Bridge offline";
 
     }
 
     button.disabled = false;
-    button.textContent = "SCAN CONSOLE";
+    button.textContent = "START SCAN";
 }
 
 
-function updateConsole(data) {
+function renderPorts(ports) {
 
-    if (!data) {
+    const table =
+        document.getElementById(
+            "portTable"
+        );
+
+    table.innerHTML = "";
+
+    if (!ports.length) {
+
+        table.innerHTML =
+            `<div class="empty-row">
+                No result
+             </div>`;
+
         return;
     }
 
-    if (data.ip) {
 
-        document.getElementById(
-            "ps4Ip"
-        ).textContent = data.ip;
+    ports.forEach(port => {
 
-        document.getElementById(
-            "infoIp"
-        ).textContent = data.ip;
-    }
+        const row =
+            document.createElement("div");
 
-    if (data.firmware) {
+        row.className = "port-row";
 
-        document.getElementById(
-            "firmware"
-        ).textContent = data.firmware;
-    }
+        const status =
+            port.open
+                ? "OPEN"
+                : "CLOSED";
 
-    if (data.goldhen) {
+        const statusClass =
+            port.open
+                ? "port-open"
+                : "port-closed";
 
-        document.getElementById(
-            "goldhen"
-        ).textContent = data.goldhen;
-    }
+        row.innerHTML = `
+            <span>${escapeHtml(port.port)}</span>
+            <span>${escapeHtml(port.service)}</span>
+            <span class="${statusClass}">
+                ${status}
+            </span>
+            <span>
+                ${
+                    port.latency_ms !== null &&
+                    port.latency_ms !== undefined
+                        ? escapeHtml(port.latency_ms) + " ms"
+                        : "-"
+                }
+            </span>
+        `;
 
-    if (data.network) {
+        table.appendChild(row);
 
-        document.getElementById(
-            "network"
-        ).textContent = data.network;
-    }
-
-    if (data.online) {
-
-        document.querySelector(
-            ".connection"
-        ).classList.add("online");
-
-        document.getElementById(
-            "connectionText"
-        ).textContent = "ONLINE";
-
-        document.querySelector(
-            ".status-line"
-        ).classList.add("online");
-
-        document.getElementById(
-            "consoleStatus"
-        ).textContent =
-            "Console connected";
-    }
+    });
 
 }
 
@@ -428,11 +474,973 @@ document
     );
 
 
-selectCard(0);
+document
+    .getElementById("networkScanButton")
+    .addEventListener(
+        "click",
+        scanNetwork
+    );
 
-updateController();
+
+/* PAYLOAD */
+
+const payloadInput =
+    document.getElementById(
+        "payloadFile"
+    );
+
+payloadInput.addEventListener(
+    "change",
+    () => {
+
+        const file =
+            payloadInput.files[0];
+
+        document.getElementById(
+            "payloadName"
+        ).textContent =
+            file
+                ? `${file.name} — ${formatBytes(file.size)}`
+                : "No payload selected";
+
+    }
+);
+
+
+document
+    .getElementById(
+        "sendPayloadButton"
+    )
+    .addEventListener(
+        "click",
+        async () => {
+
+            const file =
+                payloadInput.files[0];
+
+            if (!file) {
+
+                log(
+                    "PAYLOAD",
+                    "No BIN selected"
+                );
+
+                return;
+            }
+
+            const result =
+                document.getElementById(
+                    "payloadResult"
+                );
+
+            result.textContent =
+                "Sending payload...";
+
+            log(
+                "PAYLOAD",
+                `Sending ${file.name}`
+            );
+
+            try {
+
+                const form =
+                    new FormData();
+
+                form.append(
+                    "file",
+                    file
+                );
+
+                const data =
+                    await api(
+                        "/api/bin/send",
+                        {
+                            method: "POST",
+                            body: form
+                        }
+                    );
+
+                result.textContent =
+                    data.message ||
+                    "Payload sent";
+
+                log(
+                    "PAYLOAD",
+                    data.message || "Payload sent"
+                );
+
+            } catch (error) {
+
+                result.textContent =
+                    `ERROR: ${error.message}`;
+
+                log(
+                    "ERROR",
+                    error.message
+                );
+
+            }
+
+        }
+    );
+
+
+/* FTP */
+
+async function openFtpDirectory(path) {
+
+    const container =
+        document.getElementById(
+            "ftpFiles"
+        );
+
+    container.innerHTML =
+        `<div class="empty-row">
+            Loading...
+         </div>`;
+
+    try {
+
+        const data =
+            await api(
+                `/api/ftp/list?ip=${encodeURIComponent(ps4Ip)}&path=${encodeURIComponent(path)}`
+            );
+
+        renderFtpFiles(
+            data.path,
+            data.files || []
+        );
+
+        document.getElementById(
+            "ftpPath"
+        ).value =
+            data.path;
+
+        log(
+            "FTP",
+            `Opened ${data.path}`
+        );
+
+    } catch (error) {
+
+        container.innerHTML =
+            `<div class="empty-row">
+                ${escapeHtml(error.message)}
+             </div>`;
+
+        log(
+            "ERROR",
+            error.message
+        );
+
+    }
+
+}
+
+
+function renderFtpFiles(path, files) {
+
+    const container =
+        document.getElementById(
+            "ftpFiles"
+        );
+
+    container.innerHTML = "";
+
+
+    if (path !== "/") {
+
+        const parent =
+            document.createElement("div");
+
+        parent.className =
+            "file-row";
+
+        parent.innerHTML = `
+            <button data-path="..">
+                .. / PARENT
+            </button>
+            <span>DIRECTORY</span>
+            <span>-</span>
+        `;
+
+        parent
+            .querySelector("button")
+            .addEventListener(
+                "click",
+                () => {
+
+                    const clean =
+                        path.replace(/\/+$/, "");
+
+                    const parentPath =
+                        clean.substring(
+                            0,
+                            clean.lastIndexOf("/")
+                        ) || "/";
+
+                    openFtpDirectory(
+                        parentPath
+                    );
+
+                }
+            );
+
+        container.appendChild(parent);
+
+    }
+
+
+    files.forEach(file => {
+
+        const row =
+            document.createElement("div");
+
+        row.className =
+            "file-row";
+
+
+        const name =
+            document.createElement("button");
+
+        name.textContent =
+            file.name;
+
+
+        if (file.type === "dir") {
+
+            name.addEventListener(
+                "click",
+                () => {
+
+                    const next =
+                        path === "/"
+                            ? `/${file.name}`
+                            : `${path}/${file.name}`;
+
+                    openFtpDirectory(
+                        next
+                    );
+
+                }
+            );
+
+        } else {
+
+            name.disabled = true;
+
+        }
+
+
+        const type =
+            document.createElement("span");
+
+        type.textContent =
+            file.type === "dir"
+                ? "DIRECTORY"
+                : formatBytes(
+                    file.size || 0
+                );
+
+
+        const action =
+            document.createElement("span");
+
+        action.textContent =
+            file.type === "dir"
+                ? "OPEN"
+                : "";
+
+
+        row.appendChild(name);
+        row.appendChild(type);
+        row.appendChild(action);
+
+        container.appendChild(row);
+
+    });
+
+}
+
+
+document
+    .getElementById(
+        "ftpOpenButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            openFtpDirectory(
+                document.getElementById(
+                    "ftpPath"
+                ).value
+            );
+
+        }
+    );
+
+
+document
+    .getElementById(
+        "ftpRefreshButton"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            openFtpDirectory(
+                document.getElementById(
+                    "ftpPath"
+                ).value
+            );
+
+        }
+    );
+
+
+/* FTP UPLOAD */
+
+document
+    .getElementById(
+        "ftpUploadButton"
+    )
+    .addEventListener(
+        "click",
+        async () => {
+
+            const input =
+                document.getElementById(
+                    "ftpUploadFile"
+                );
+
+            const file =
+                input.files[0];
+
+            if (!file) {
+
+                log(
+                    "FTP",
+                    "No file selected"
+                );
+
+                return;
+            }
+
+            const path =
+                document.getElementById(
+                    "ftpPath"
+                ).value;
+
+
+            const form =
+                new FormData();
+
+            form.append(
+                "file",
+                file
+            );
+
+            form.append(
+                "path",
+                path
+            );
+
+            log(
+                "FTP",
+                `Uploading ${file.name}`
+            );
+
+            try {
+
+                const data =
+                    await api(
+                        "/api/ftp/upload",
+                        {
+                            method: "POST",
+                            body: form
+                        }
+                    );
+
+                log(
+                    "FTP",
+                    data.message
+                );
+
+                openFtpDirectory(
+                    path
+                );
+
+            } catch (error) {
+
+                log(
+                    "ERROR",
+                    error.message
+                );
+
+            }
+
+        }
+    );
+
+
+/* PKG */
+
+document
+    .getElementById(
+        "pkgUploadButton"
+    )
+    .addEventListener(
+        "click",
+        async () => {
+
+            const input =
+                document.getElementById(
+                    "pkgFile"
+                );
+
+            const file =
+                input.files[0];
+
+            const result =
+                document.getElementById(
+                    "pkgResult"
+                );
+
+            if (!file) {
+
+                result.textContent =
+                    "Select a PKG first.";
+
+                return;
+            }
+
+            result.textContent =
+                "Uploading PKG...";
+
+            log(
+                "PKG",
+                `Uploading ${file.name}`
+            );
+
+            try {
+
+                const form =
+                    new FormData();
+
+                form.append(
+                    "file",
+                    file
+                );
+
+                const data =
+                    await api(
+                        "/api/pkg/upload",
+                        {
+                            method: "POST",
+                            body: form
+                        }
+                    );
+
+                result.textContent =
+                    data.message;
+
+                log(
+                    "PKG",
+                    data.message
+                );
+
+            } catch (error) {
+
+                result.textContent =
+                    `ERROR: ${error.message}`;
+
+                log(
+                    "ERROR",
+                    error.message
+                );
+
+            }
+
+        }
+    );
+
+
+/* SETTINGS */
+
+function loadSettings() {
+
+    document.getElementById(
+        "settingsIp"
+    ).value =
+        ps4Ip;
+
+    document.getElementById(
+        "settingsBridge"
+    ).value =
+        bridge;
+
+}
+
+
+document
+    .getElementById(
+        "saveSettings"
+    )
+    .addEventListener(
+        "click",
+        () => {
+
+            ps4Ip =
+                document.getElementById(
+                    "settingsIp"
+                ).value.trim();
+
+            bridge =
+                document.getElementById(
+                    "settingsBridge"
+                ).value.trim()
+                    .replace(/\/$/, "");
+
+
+            localStorage.setItem(
+                "ps4_ip",
+                ps4Ip
+            );
+
+            localStorage.setItem(
+                "ps4_bridge",
+                bridge
+            );
+
+
+            document.getElementById(
+                "consoleIp"
+            ).textContent =
+                ps4Ip;
+
+            document.getElementById(
+                "topIp"
+            ).textContent =
+                ps4Ip;
+
+
+            log(
+                "SETTINGS",
+                "Configuration saved"
+            );
+
+        }
+    );
+
+
+/* GAMEPAD */
+
+function findGamepad() {
+
+    if (!navigator.getGamepads) {
+        return null;
+    }
+
+    const pads =
+        navigator.getGamepads();
+
+    for (const pad of pads) {
+
+        if (pad && pad.connected) {
+            return pad;
+        }
+
+    }
+
+    return null;
+}
+
+
+function updateGamepad() {
+
+    const pad =
+        findGamepad();
+
+    if (pad && !currentGamepad) {
+
+        currentGamepad = pad;
+
+        document.getElementById(
+            "controllerName"
+        ).textContent =
+            pad.id;
+
+        document.getElementById(
+            "controllerState"
+        ).textContent =
+            "Controller connected";
+
+        log(
+            "CONTROLLER",
+            "Gamepad connected"
+        );
+
+    }
+
+
+    if (!pad && currentGamepad) {
+
+        currentGamepad = null;
+
+        document.getElementById(
+            "controllerName"
+        ).textContent =
+            "NO CONTROLLER";
+
+        document.getElementById(
+            "controllerState"
+        ).textContent =
+            "Press any button";
+
+        log(
+            "CONTROLLER",
+            "Gamepad disconnected"
+        );
+
+    }
+
+
+    if (pad) {
+
+        updateSticks(pad);
+        updateButtons(pad);
+        handleGamepadNavigation(pad);
+
+    }
+
+
+    requestAnimationFrame(
+        updateGamepad
+    );
+
+}
+
+
+function updateSticks(pad) {
+
+    const axes =
+        pad.axes || [];
+
+    const lx =
+        axes[0] || 0;
+
+    const ly =
+        axes[1] || 0;
+
+    const rx =
+        axes[2] || 0;
+
+    const ry =
+        axes[3] || 0;
+
+
+    moveStick(
+        "leftStick",
+        lx,
+        ly
+    );
+
+    moveStick(
+        "rightStick",
+        rx,
+        ry
+    );
+
+
+    document.getElementById(
+        "leftAxis"
+    ).textContent =
+        `X ${lx.toFixed(2)} / Y ${ly.toFixed(2)}`;
+
+    document.getElementById(
+        "rightAxis"
+    ).textContent =
+        `X ${rx.toFixed(2)} / Y ${ry.toFixed(2)}`;
+
+}
+
+
+function moveStick(id, x, y) {
+
+    const element =
+        document.getElementById(id);
+
+    const max =
+        45;
+
+    element.style.transform =
+        `translate(
+            ${x * max}px,
+            ${y * max}px
+        )`;
+
+}
+
+
+function buttonPressed(
+    pad,
+    index
+) {
+
+    return Boolean(
+        pad.buttons &&
+        pad.buttons[index] &&
+        pad.buttons[index].pressed
+    );
+
+}
+
+
+function setButton(
+    id,
+    pressed
+) {
+
+    const element =
+        document.getElementById(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent =
+        pressed
+            ? "PRESSED"
+            : "READY";
+
+    element.style.color =
+        pressed
+            ? "var(--blue2)"
+            : "var(--green)";
+
+}
+
+
+function updateButtons(pad) {
+
+    setButton(
+        "buttonX",
+        buttonPressed(pad, 0)
+    );
+
+    setButton(
+        "buttonO",
+        buttonPressed(pad, 1)
+    );
+
+    setButton(
+        "buttonTriangle",
+        buttonPressed(pad, 2)
+    );
+
+    setButton(
+        "buttonSquare",
+        buttonPressed(pad, 3)
+    );
+
+    setButton(
+        "buttonL1",
+        buttonPressed(pad, 4)
+    );
+
+    setButton(
+        "buttonR1",
+        buttonPressed(pad, 5)
+    );
+
+    setButton(
+        "buttonOptions",
+        buttonPressed(pad, 9)
+    );
+
+    setButton(
+        "buttonShare",
+        buttonPressed(pad, 8)
+    );
+
+}
+
+
+function handleGamepadNavigation(pad) {
+
+    const now =
+        performance.now();
+
+    if (
+        now - lastNavigation <
+        220
+    ) {
+        return;
+    }
+
+
+    const x =
+        pad.axes?.[0] || 0;
+
+    const y =
+        pad.axes?.[1] || 0;
+
+
+    if (y < -0.65) {
+
+        selectedNav--;
+
+        if (selectedNav < 0) {
+            selectedNav =
+                navButtons.length - 1;
+        }
+
+        selectNav();
+
+        lastNavigation = now;
+
+        return;
+    }
+
+
+    if (y > 0.65) {
+
+        selectedNav++;
+
+        if (
+            selectedNav >=
+            navButtons.length
+        ) {
+            selectedNav = 0;
+        }
+
+        selectNav();
+
+        lastNavigation = now;
+
+        return;
+    }
+
+
+    if (x < -0.65) {
+
+        selectedNav--;
+
+        if (selectedNav < 0) {
+            selectedNav =
+                navButtons.length - 1;
+        }
+
+        selectNav();
+
+        lastNavigation = now;
+
+        return;
+    }
+
+
+    if (x > 0.65) {
+
+        selectedNav++;
+
+        if (
+            selectedNav >=
+            navButtons.length
+        ) {
+            selectedNav = 0;
+        }
+
+        selectNav();
+
+        lastNavigation = now;
+
+        return;
+    }
+
+
+    if (buttonPressed(pad, 0)) {
+
+        const button =
+            navButtons[selectedNav];
+
+        if (button) {
+
+            showPage(
+                button.dataset.page
+            );
+
+        }
+
+        lastNavigation = now;
+    }
+
+}
+
+
+function selectNav() {
+
+    navButtons.forEach(
+        (button, index) => {
+
+            button.classList.toggle(
+                "active",
+                index === selectedNav
+            );
+
+        }
+    );
+
+}
+
+
+/* UTILS */
+
+function formatBytes(bytes) {
+
+    if (!bytes) {
+        return "0 B";
+    }
+
+    const units =
+        [
+            "B",
+            "KB",
+            "MB",
+            "GB"
+        ];
+
+    const index =
+        Math.floor(
+            Math.log(bytes) /
+            Math.log(1024)
+        );
+
+    return (
+        (bytes /
+            Math.pow(1024, index)
+        ).toFixed(2)
+        + " "
+        + units[index]
+    );
+
+}
+
+
+/* INIT */
+
+loadSettings();
+
+selectNav();
+
+updateGamepad();
 
 log(
     "SYSTEM",
-    "Controller navigation enabled"
+    "PS4 Control Center V2 ready"
+);
+
+log(
+    "SYSTEM",
+    `Target PS4: ${ps4Ip}`
 );
